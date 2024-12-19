@@ -1,0 +1,69 @@
+import numpy as np
+
+# Objective function (Sphere function)
+def sphere_function(x):
+    return np.sum(x**2)
+
+# Grey Wolf Optimization (GWO) Algorithm
+def gwo(num_wolves, dim, max_iter):
+    # Initialize positions of wolves randomly within the search space
+    X = np.random.uniform(-10, 10, (num_wolves, dim))  # 10 is the search space boundary
+    fitness = np.full(num_wolves, np.inf)  # Initialize fitness values to infinity
+
+    # Initialize alpha, beta, delta wolves' positions
+    alpha_pos = np.zeros(dim)
+    beta_pos = np.zeros(dim)
+    delta_pos = np.zeros(dim)
+    alpha_score = np.inf
+    beta_score = np.inf
+    delta_score = np.inf
+
+    # Main loop
+    for t in range(max_iter):
+        # Evaluate fitness of all wolves
+        for i in range(num_wolves):
+            fitness[i] = sphere_function(X[i])  # Sphere function
+
+        # Sort wolves by fitness (ascending order for minimization)
+        sorted_indices = np.argsort(fitness)
+        X = X[sorted_indices]  # Sort the positions of wolves
+        fitness = fitness[sorted_indices]  # Sort the fitness values
+
+        # Update alpha, beta, delta wolves
+        alpha_pos = X[0]  # Best solution
+        alpha_score = fitness[0]
+        beta_pos = X[1]   # Second best
+        beta_score = fitness[1]
+        delta_pos = X[2]  # Third best
+        delta_score = fitness[2]
+
+        # Update positions of all wolves
+        A = 2 * np.random.rand(num_wolves, dim) - 1  # Random values between -1 and 1
+        C = 2 * np.random.rand(num_wolves, dim)  # Random values between 0 and 2
+
+        for i in range(num_wolves):
+            # Update position using the formula for alpha, beta, and delta wolves
+            for j in range(dim):
+                D_alpha = abs(C[i, j] * alpha_pos[j] - X[i, j])
+                D_beta = abs(C[i, j] * beta_pos[j] - X[i, j])
+                D_delta = abs(C[i, j] * delta_pos[j] - X[i, j])
+
+                # Update the position based on alpha, beta, delta
+                X[i, j] = X[i, j] + A[i, j] * (D_alpha + D_beta + D_delta) / 3
+
+        # Optionally: Check for convergence (you can add an early stopping condition)
+
+        print(f"Iteration {t+1}, Best Fitness: {alpha_score}")
+
+    return alpha_pos, alpha_score  # Return the best solution found
+
+# Parameters
+num_wolves = 30
+dim = 10  # 10-dimensional search space
+max_iter = 100
+
+# Run the GWO algorithm
+best_position, best_fitness = gwo(num_wolves, dim, max_iter)
+
+print("Best Position:", best_position)
+print("Best Fitness:", best_fitness)
