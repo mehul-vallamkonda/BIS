@@ -1,0 +1,77 @@
+import numpy as np
+import math
+
+# Objective function to minimize
+def objective_function(x, y):
+    return x**2 - x*y + y**2 + 2*x + 4*y + 3
+
+# Lévy flight function (based on power-law distribution)
+def levy_flight(Lambda, size):
+    u = np.random.normal(0, 1, size)
+    v = np.random.normal(0, 1, size)
+    step = u / np.power(np.abs(v), 1/Lambda)  # Lévy flight step
+    return step
+
+# Cuckoo Search Algorithm
+def cuckoo_search(obj_func, n_nests=25, max_iter=1000, alpha=0.1, pa=0.25, lambda_=1.5):
+    # Initialize population (nests) randomly
+    nests = np.random.uniform(low=-5, high=5, size=(n_nests, 2))  # Bounds for x, y
+    fitness = np.array([obj_func(x, y) for x, y in nests])  # Evaluate initial fitness
+
+    # Best nest (solution) at the beginning
+    best_idx = np.argmin(fitness)
+    best_nest = nests[best_idx]
+    best_fitness = fitness[best_idx]
+
+    # Main loop for iterations
+    for iteration in range(max_iter):
+        # Generate new solutions using Lévy flight
+        for i in range(n_nests):
+            # Generate a new position using Lévy flight
+            step = alpha * levy_flight(lambda_, 2)  # 2 because we're working in 2D (x, y)
+            new_nest = nests[i] + step
+
+            # Make sure the new solution is within bounds
+            new_nest = np.clip(new_nest, -5, 5)
+
+            # Evaluate the new solution's fitness
+            new_fitness = obj_func(new_nest[0], new_nest[1])
+
+            # If the new solution is better, replace the current one
+            if new_fitness < fitness[i]:
+                nests[i] = new_nest
+                fitness[i] = new_fitness
+
+                # Update the best solution found so far
+                if new_fitness < best_fitness:
+                    best_fitness = new_fitness
+                    best_nest = new_nest
+
+        # Perform the abandonment process: replace a fraction of nests
+        for i in range(n_nests):
+            if np.random.rand() < pa:
+                # Generate a new nest and evaluate fitness
+                new_nest = np.random.uniform(low=-5, high=5, size=2)
+                new_fitness = obj_func(new_nest[0], new_nest[1])
+
+                # Replace worst nests if the new nest is better
+                if new_fitness < fitness[i]:
+                    nests[i] = new_nest
+                    fitness[i] = new_fitness
+
+                    # Update the best solution found so far
+                    if new_fitness < best_fitness:
+                        best_fitness = new_fitness
+                        best_nest = new_nest
+
+        # Print progress every 100 iterations
+        if iteration % 100 == 0:
+            print(f"Iteration {iteration}, Best Fitness: {best_fitness}, Best Solution: {best_nest}")
+
+    return best_nest, best_fitness
+
+# Run Cuckoo Search
+best_solution, best_value = cuckoo_search(objective_function, n_nests=25, max_iter=1000, alpha=0.1, pa=0.25)
+
+print(f"Best solution found: x = {best_solution[0]}, y = {best_solution[1]}")
+print(f"Best objective function value: {best_value}")
