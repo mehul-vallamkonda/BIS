@@ -1,0 +1,51 @@
+import random
+def fitness(chromosome):
+    x = int(''.join(map(str, chromosome)), 2)
+    return x ** 2
+def generate_chromosome(length):
+    return [random.randint(0, 1) for _ in range(length)]
+
+def generate_population(size, chromosome_length):
+    return [generate_chromosome(chromosome_length) for _ in range(size)]
+
+population_size = 10
+chromosome_length = 5
+population = generate_population(population_size, chromosome_length)
+fitnesses = [fitness(chromosome) for chromosome in population]
+def select_pair(population, fitnesses):
+    total_fitness = sum(fitnesses)
+    selection_probs = [f / total_fitness for f in fitnesses]
+    parent1 = population[random.choices(range(len(population)), selection_probs)[0]]
+    parent2 = population[random.choices(range(len(population)), selection_probs)[0]]
+    return parent1, parent2
+def crossover(parent1, parent2):
+    point = random.randint(1, len(parent1) - 1)
+    offspring1 = parent1[:point] + parent2[point:]
+    offspring2 = parent2[:point] + parent1[point:]
+    return offspring1, offspring2
+def mutate(chromosome, mutation_rate):
+    return [gene if random.random() > mutation_rate else 1 - gene for gene in chromosome]
+
+mutation_rate = 0.01
+num_generations = 100
+
+for generation in range(num_generations):
+    new_population = []
+
+    for _ in range(population_size // 2):  # Assuming each iteration creates 2 offspring
+        parent1, parent2 = select_pair(population, fitnesses)
+        offspring1, offspring2 = crossover(parent1, parent2)
+        offspring1 = mutate(offspring1, mutation_rate)
+        offspring2 = mutate(offspring2, mutation_rate)
+        new_population.extend([offspring1, offspring2])
+
+    population = new_population
+    best_individual = ''
+    best_fitness = 0
+    for chromosome in population:
+        chromosome_fitness = fitness(chromosome)
+        if chromosome_fitness > best_fitness:
+            best_fitness = chromosome_fitness
+            best_individual = chromosome
+    # Optionally, you can print or log the best fitness each generation
+    print(f"Generation {generation}: Best Individual = {best_individual}, Fitness = {best_fitness}")
